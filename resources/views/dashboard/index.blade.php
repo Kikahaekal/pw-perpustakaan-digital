@@ -88,7 +88,9 @@
             <p class="mx-auto mt-3 max-w-2xl text-center text-xs leading-relaxed text-slate-300">
                 NEVERMORE — Perpustakaan Digital kelompok Pemrograman Web.
                 Progres tahap 1: login, register, reset password, katalog (Popular Now, New Uploads, Random),
-                detail buku, filter tags/author, dan favorit (sesi). Pinjam & kelola buku tahap 2.
+                detail buku, filter tags/author, dan favorit (sesi).
+                Tahap 2: katalog kini dibaca langsung dari database (tabel bukus & kategoris) lewat Eloquent.
+                Pinjam & kelola buku menyusul.
             </p>
         </section>
     @endif

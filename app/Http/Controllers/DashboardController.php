@@ -2,42 +2,82 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Buku;
+use App\Models\Kategori;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     /**
-     * Data dummy tahap 1 — ganti query `bukus` + `kategoris` di tahap 2.
+     * Eager load kategori beserta jumlah bukunya (untuk label tag).
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<string, callable>
      */
-    public static function dummyBooks(): array
+    private function kategorisRelation(): array
     {
         return [
-            ['id' => 666, 'judul' => 'Tales Of Horror', 'author' => 'HP. Lovecraft', 'author_books' => 70, 'tags' => [['nama' => 'Horror', 'count' => '20.1k'], ['nama' => 'Thriller', 'count' => '10k'], ['nama' => 'Dark Fantasy', 'count' => '35.1k']], 'halaman' => 768, 'uploaded' => '1 Month 2 Weeks 3 Days ago', 'favorit' => 19465, 'popular' => 99, 'tanggal_unggah' => '2026-09-28', 'stok' => 3, 'cover' => 'from-red-900 via-black to-red-950', 'inisial' => 'HPL'],
-            ['id' => 101, 'judul' => 'The Night Ocean', 'author' => 'Paul La Farge', 'author_books' => 12, 'tags' => [['nama' => 'Horror', 'count' => '8.2k'], ['nama' => 'Misteri', 'count' => '5.1k']], 'halaman' => 320, 'uploaded' => '2 Weeks 1 Day ago', 'favorit' => 8210, 'popular' => 95, 'tanggal_unggah' => '2026-09-20', 'stok' => 4, 'cover' => 'from-amber-100 via-stone-300 to-stone-500', 'inisial' => 'TNO'],
-            ['id' => 102, 'judul' => 'I Died During The College Debate', 'author' => 'Ren Takahashi', 'author_books' => 8, 'tags' => [['nama' => 'Fantasi', 'count' => '12k'], ['nama' => 'Aksi', 'count' => '9k']], 'halaman' => 412, 'uploaded' => '3 Days ago', 'favorit' => 15020, 'popular' => 93, 'tanggal_unggah' => '2026-10-04', 'stok' => 5, 'cover' => 'from-slate-600 via-slate-800 to-black', 'inisial' => 'IDD'],
-            ['id' => 103, 'judul' => 'Tapes Und Butterbrot', 'author' => 'Studio Mono', 'author_books' => 3, 'tags' => [['nama' => 'Thriller', 'count' => '4k'], ['nama' => 'Psikologi', 'count' => '2k']], 'halaman' => 256, 'uploaded' => '1 Month ago', 'favorit' => 4310, 'popular' => 88, 'tanggal_unggah' => '2026-09-05', 'stok' => 0, 'cover' => 'from-orange-400 via-orange-500 to-amber-600', 'inisial' => 'TUB'],
-            ['id' => 104, 'judul' => 'Roaches In Her Crib', 'author' => 'D. Coleman', 'author_books' => 5, 'tags' => [['nama' => 'Horror', 'count' => '6.7k'], ['nama' => 'Komedi', 'count' => '3k']], 'halaman' => 288, 'uploaded' => '5 Days ago', 'favorit' => 9870, 'popular' => 91, 'tanggal_unggah' => '2026-10-02', 'stok' => 2, 'cover' => 'from-sky-800 via-slate-700 to-slate-900', 'inisial' => 'RHC'],
-            ['id' => 105, 'judul' => 'Dasar Pemrograman Web', 'author' => 'Tim Dosen PW', 'author_books' => 4, 'tags' => [['nama' => 'Edukasi', 'count' => '15k'], ['nama' => 'Teknologi', 'count' => '11k']], 'halaman' => 350, 'uploaded' => '1 Week ago', 'favorit' => 2210, 'popular' => 82, 'tanggal_unggah' => '2026-09-30', 'stok' => 10, 'cover' => 'from-indigo-500 via-blue-600 to-blue-800', 'inisial' => 'PW'],
-            ['id' => 106, 'judul' => 'Laut Bercerita', 'author' => 'Leila S. Chudori', 'author_books' => 9, 'tags' => [['nama' => 'Drama', 'count' => '18k'], ['nama' => 'Sejarah', 'count' => '7k']], 'halaman' => 379, 'uploaded' => '2 Months ago', 'favorit' => 17400, 'popular' => 90, 'tanggal_unggah' => '2026-08-15', 'stok' => 6, 'cover' => 'from-cyan-600 via-sky-700 to-blue-900', 'inisial' => 'LB'],
-            ['id' => 107, 'judul' => 'Senja di Ujung Kota', 'author' => 'M. Fauzi', 'author_books' => 2, 'tags' => [['nama' => 'Romance', 'count' => '9k'], ['nama' => 'Drama', 'count' => '4k']], 'halaman' => 198, 'uploaded' => '3 Weeks ago', 'favorit' => 3120, 'popular' => 77, 'tanggal_unggah' => '2026-09-12', 'stok' => 7, 'cover' => 'from-rose-400 via-orange-400 to-amber-500', 'inisial' => 'SUK'],
-            ['id' => 108, 'judul' => 'Operasi Tengah Malam', 'author' => 'Kika Haekal', 'author_books' => 6, 'tags' => [['nama' => 'Thriller', 'count' => '7k'], ['nama' => 'Aksi', 'count' => '6k']], 'halaman' => 334, 'uploaded' => '1 Day ago', 'favorit' => 5540, 'popular' => 86, 'tanggal_unggah' => '2026-10-06', 'stok' => 3, 'cover' => 'from-zinc-700 via-zinc-900 to-black', 'inisial' => 'OTM'],
-            ['id' => 109, 'judul' => 'Misteri Kos No. 13', 'author' => 'M. Khaerul', 'author_books' => 4, 'tags' => [['nama' => 'Horror', 'count' => '11k'], ['nama' => 'Misteri', 'count' => '8k']], 'halaman' => 288, 'uploaded' => '2 Days ago', 'favorit' => 7630, 'popular' => 89, 'tanggal_unggah' => '2026-10-05', 'stok' => 5, 'cover' => 'from-violet-700 via-purple-900 to-black', 'inisial' => 'K13'],
+            'kategoris' => fn ($query) => $query->withCount('bukus'),
         ];
     }
 
-    public static function findBook(int $id): ?array
+    /**
+     * Jumlah buku per pengarang (kolom kecil di samping nama author).
+     *
+     * @return Collection<string, int>
+     */
+    private function authorBookCounts(): Collection
     {
-        foreach (self::dummyBooks() as $book) {
-            if ($book['id'] === $id) {
-                return $book;
-            }
-        }
+        return Buku::query()
+            ->selectRaw('pengarang, count(*) as total')
+            ->groupBy('pengarang')
+            ->pluck('total', 'pengarang');
+    }
 
-        return null;
+    /**
+     * Ubah model Buku menjadi bentuk array yang dipakai view katalog.
+     *
+     * @param  array<int, int>  $favorites
+     * @param  Collection<string, int>  $authorCounts
+     * @return array<string, mixed>
+     */
+    private function present(Buku $buku, array $favorites, Collection $authorCounts): array
+    {
+        return [
+            'id' => $buku->id,
+            'judul' => $buku->judul,
+            'author' => $buku->pengarang,
+            'author_books' => (int) $authorCounts->get($buku->pengarang, 0),
+            'tags' => $buku->kategoris->map(fn (Kategori $kategori): array => [
+                'nama' => $kategori->nama_kategori,
+                'count' => (string) $kategori->bukus_count,
+            ])->all(),
+            'halaman' => (int) $buku->jumlah_halaman,
+            'uploaded' => $buku->created_at?->diffForHumans(),
+            'favorit' => (int) $buku->jumlah_favorit,
+            'popular' => (int) $buku->populer,
+            'tanggal_unggah' => $buku->created_at?->toDateString(),
+            'stok' => (int) $buku->stok,
+            'cover' => $buku->cover ?? 'from-slate-700 via-slate-900 to-black',
+            'inisial' => $buku->inisial ?? '',
+            'is_favorit' => in_array($buku->id, $favorites, true),
+        ];
+    }
+
+    /**
+     * @param  EloquentCollection<int, Buku>|Collection<int, Buku>  $books
+     * @param  array<int, int>  $favorites
+     * @param  Collection<string, int>  $authorCounts
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function presentMany(EloquentCollection|Collection $books, array $favorites, Collection $authorCounts): Collection
+    {
+        return collect($books)
+            ->map(fn (Buku $buku): array => $this->present($buku, $favorites, $authorCounts))
+            ->values();
     }
 
     public function index(Request $request): View
@@ -48,33 +88,33 @@ class DashboardController extends Controller
         $onlyFavorites = $request->boolean('favorites');
         $favorites = $request->session()->get('favorites', []);
 
-        $books = collect(self::dummyBooks())
-            ->when($q !== '', fn ($c) => $c->filter(
-                fn ($b) => str_contains(strtolower($b['judul'].' '.$b['author']), strtolower($q))
+        $books = Buku::query()
+            ->with($this->kategorisRelation())
+            ->when($q !== '', fn ($builder) => $builder->where(function ($query) use ($q) {
+                $query->where('judul', 'like', "%{$q}%")
+                    ->orWhere('pengarang', 'like', "%{$q}%");
+            }))
+            ->when($tag !== '', fn ($builder) => $builder->whereHas(
+                'kategoris', fn ($query) => $query->where('nama_kategori', $tag)
             ))
-            ->when($tag !== '', fn ($c) => $c->filter(
-                fn ($b) => collect($b['tags'])->contains(fn ($t) => strtolower($t['nama']) === strtolower($tag))
-            ))
-            ->when($author !== '', fn ($c) => $c->filter(
-                fn ($b) => str_contains(strtolower($b['author']), strtolower($author))
-            ))
-            ->when($onlyFavorites, fn ($c) => $c->filter(
-                fn ($b) => in_array($b['id'], $favorites, true)
-            ))
-            ->values();
-
-        $allTags = collect(self::dummyBooks())->pluck('tags')->flatten(1)->pluck('nama')->unique()->sort()->values();
-        $allAuthors = collect(self::dummyBooks())->pluck('author')->unique()->sort()->values();
+            ->when($author !== '', fn ($builder) => $builder->where('pengarang', 'like', "%{$author}%"))
+            ->when($onlyFavorites, fn ($builder) => $builder->whereIn('id', $favorites === [] ? [0] : $favorites))
+            ->get();
 
         $isFiltering = $q !== '' || $tag !== '' || $author !== '' || $onlyFavorites;
+        $authorCounts = $this->authorBookCounts();
+
+        $popular = $isFiltering
+            ? $books->take(5)
+            : $books->sortByDesc('populer')->take(5)->values();
 
         return view('dashboard.index', [
-            'books' => $books,
-            'popular' => $isFiltering ? $books->take(5)->values() : (clone $books)->sortByDesc('popular')->take(5)->values(),
-            'newUploads' => (clone $books)->sortByDesc('tanggal_unggah')->take(10)->values(),
-            'random' => (clone $books)->shuffle()->take(5)->values(),
-            'tags' => $allTags,
-            'authors' => $allAuthors,
+            'books' => $this->presentMany($books, $favorites, $authorCounts),
+            'popular' => $this->presentMany($popular, $favorites, $authorCounts),
+            'newUploads' => $this->presentMany($books->sortByDesc('created_at')->take(10)->values(), $favorites, $authorCounts),
+            'random' => $this->presentMany($books->shuffle()->take(5)->values(), $favorites, $authorCounts),
+            'tags' => Kategori::query()->orderBy('nama_kategori')->pluck('nama_kategori'),
+            'authors' => Buku::query()->orderBy('pengarang')->distinct()->pluck('pengarang'),
             'q' => $q,
             'activeTag' => $tag,
             'activeAuthor' => $author,
@@ -85,25 +125,27 @@ class DashboardController extends Controller
 
     public function show(Request $request, int $id): View
     {
-        $book = self::findBook($id);
-
-        abort_if($book === null, 404);
+        $buku = Buku::query()->with($this->kategorisRelation())->findOrFail($id);
 
         $favorites = $request->session()->get('favorites', []);
-        $book['is_favorit'] = in_array($book['id'], $favorites, true);
+        $authorCounts = $this->authorBookCounts();
 
-        $newUploads = collect(self::dummyBooks())->sortByDesc('tanggal_unggah')->take(10)->values();
+        $newUploads = Buku::query()
+            ->with($this->kategorisRelation())
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
 
         return view('dashboard.show', [
-            'book' => $book,
-            'newUploads' => $newUploads,
+            'book' => $this->present($buku, $favorites, $authorCounts),
+            'newUploads' => $this->presentMany($newUploads, $favorites, $authorCounts),
             'q' => '',
         ]);
     }
 
     public function toggleFavorite(Request $request, int $id): RedirectResponse
     {
-        abort_if(self::findBook($id) === null, 404);
+        abort_unless(Buku::query()->whereKey($id)->exists(), 404);
 
         $favorites = $request->session()->get('favorites', []);
 

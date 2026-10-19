@@ -1,9 +1,14 @@
 <?php
 
+use App\Models\Buku;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed();
+});
 
 test('halaman login tampil ala NEVERMORE', function () {
     $this->get(route('login'))->assertOk()->assertSee('NEVERMORE');
@@ -58,30 +63,55 @@ test('user bisa login dan logout', function () {
     $this->assertGuest();
 });
 
+test('dashboard menampilkan katalog dari database', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee(Buku::query()->orderByDesc('populer')->value('judul'));
+});
+
 test('dashboard bisa mencari dan memfilter tag', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $this->get(route('dashboard', ['q' => 'Horror']))->assertOk()->assertSee('Tales Of Horror');
+    $buku = Buku::query()->where('judul', 'Tales Of Horror')->firstOrFail();
+
+    $this->get(route('dashboard', ['q' => 'Tales']))->assertOk()->assertSee($buku->judul);
     $this->get(route('dashboard', ['tag' => 'Horror']))->assertOk()->assertSee('Horror');
+    $this->get(route('dashboard', ['author' => 'Lovecraft']))->assertOk()->assertSee($buku->judul);
 });
 
 test('halaman detail buku tampil ala figma', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $this->get(route('books.show', 666))
+    $buku = Buku::query()->where('judul', 'Tales Of Horror')->firstOrFail();
+
+    $this->get(route('books.show', $buku->id))
         ->assertOk()
-        ->assertSee('Tales Of Horror')
+        ->assertSee($buku->judul)
         ->assertSee('#')
-        ->assertSee('666')
+        ->assertSee((string) $buku->id)
         ->assertSee('Favorite');
+});
+
+test('halaman detail buku yang tidak ada memberi 404', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('books.show', 999999))->assertNotFound();
 });
 
 test('favorit bisa di-toggle dan muncul di menu favorites', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $this->post(route('books.favorite', 666))->assertRedirect();
-    $this->get(route('dashboard', ['favorites' => 1]))->assertOk()->assertSee('Tales Of Horror');
+    $buku = Buku::query()->value('id');
+
+    $this->post(route('books.favorite', $buku))->assertRedirect();
+    $this->get(route('dashboard', ['favorites' => 1]))
+        ->assertOk()
+        ->assertSee(Buku::query()->whereKey($buku)->value('judul'));
 });
