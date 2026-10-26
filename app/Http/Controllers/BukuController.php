@@ -3,63 +3,101 @@
 namespace App\Http\Controllers;
 
 use App\Models\Buku;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BukuController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        return response()->json(
+            Buku::query()->with('kategoris')->latest()->paginate(15)
+        );
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $this->authorizeAdmin($request);
+        $validated = $request->validate($this->rules());
+        $kategoriIds = $validated['kategori_ids'] ?? [];
+        unset($validated['kategori_ids']);
+
+        $buku = DB::transaction(function () use ($validated, $kategoriIds): Buku {
+            $buku = Buku::query()->create($validated);
+            $buku->kategoris()->sync($kategoriIds);
+
+            return $buku->load('kategoris');
+        });
+
+        return response()->json($buku, 201);
+    }
+
+    public function show(Buku $buku): JsonResponse
+    {
+        return response()->json($buku->load('kategoris'));
+    }
+
+    public function update(Request $request, Buku $buku): JsonResponse
+    {
+        $this->authorizeAdmin($request);
+        $validated = $request->validate($this->rules($buku));
+        $kategoriIds = $validated['kategori_ids'] ?? null;
+        unset($validated['kategori_ids']);
+
+        DB::transaction(function () use ($buku, $validated, $kategoriIds): void {
+            $buku->update($validated);
+
+            if ($kategoriIds !== null) {
+                $buku->kategoris()->sync($kategoriIds);
+            }
+        });
+
+        return response()->json($buku->refresh()->load('kategoris'));
+    }
+
+    public function destroy(Request $request, Buku $buku): JsonResponse
+    {
+        $this->authorizeAdmin($request);
+
+        if ($buku->peminjamans()->exists()) {
+            return response()->json([
+                'message' => 'Buku yang sudah tercatat dalam peminjaman tidak dapat dihapus.',
+            ], 409);
+        }
+
+        $buku->delete();
+
+        return response()->json(status: 204);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @return array<string, array<int, mixed>>
      */
-    public function create()
+    private function rules(?Buku $buku = null): array
     {
-        //
+        $required = $buku === null ? 'required' : 'sometimes';
+
+        return [
+            'judul' => [$required, 'string', 'max:255'],
+            'inisial' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'cover' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'pengarang' => [$required, 'string', 'max:255'],
+            'penerbit' => [$required, 'string', 'max:255'],
+            'isbn' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'tahun_terbit' => [$required, 'integer', 'min:0', 'max:'.now()->year],
+            'jumlah_halaman' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'stok' => [$required, 'integer', 'min:0'],
+            'populer' => ['sometimes', 'integer', 'min:0'],
+            'jumlah_favorit' => ['sometimes', 'integer', 'min:0'],
+            'kategori_ids' => ['sometimes', 'array'],
+            'kategori_ids.*' => ['integer', 'distinct', Rule::exists('kategoris', 'id')],
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    private function authorizeAdmin(Request $request): void
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Buku $buku)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Buku $buku)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Buku $buku)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Buku $buku)
-    {
-        //
+        abort_unless($request->user()?->role === 'admin', 403);
     }
 }

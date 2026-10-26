@@ -3,63 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kategori;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class KategoriController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        return response()->json(
+            Kategori::query()->withCount('bukus')->orderBy('nama_kategori')->paginate(15)
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request): JsonResponse
     {
-        //
+        $this->authorizeAdmin($request);
+        $validated = $request->validate([
+            'nama_kategori' => ['required', 'string', 'max:255', Rule::unique('kategoris', 'nama_kategori')],
+        ]);
+
+        return response()->json(Kategori::query()->create($validated), 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show(Kategori $kategori): JsonResponse
     {
-        //
+        return response()->json($kategori->load('bukus'));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Kategori $kategori)
+    public function update(Request $request, Kategori $kategori): JsonResponse
     {
-        //
+        $this->authorizeAdmin($request);
+        $validated = $request->validate([
+            'nama_kategori' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('kategoris', 'nama_kategori')->ignore($kategori->id),
+            ],
+        ]);
+
+        $kategori->update($validated);
+
+        return response()->json($kategori->refresh());
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Kategori $kategori)
+    public function destroy(Request $request, Kategori $kategori): JsonResponse
     {
-        //
+        $this->authorizeAdmin($request);
+        $kategori->delete();
+
+        return response()->json(status: 204);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Kategori $kategori)
+    private function authorizeAdmin(Request $request): void
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Kategori $kategori)
-    {
-        //
+        abort_unless($request->user()?->role === 'admin', 403);
     }
 }

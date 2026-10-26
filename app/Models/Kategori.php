@@ -24,6 +24,6 @@ class Kategori extends Model
      */
     public function bukus(): BelongsToMany
     {
-        return $this->belongsToMany(Buku::class, 'buku_kategoris');
+        return $this->belongsToMany(Buku::class, 'buku_kategoris')->withTimestamps();
     }
 }

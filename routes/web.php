@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BukuController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\PeminjamanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,4 +27,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/books/{id}', [DashboardController::class, 'show'])->name('books.show');
     Route::post('/books/{id}/favorite', [DashboardController::class, 'toggleFavorite'])->name('books.favorite');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::apiResource('bukus', BukuController::class);
+        Route::apiResource('kategoris', KategoriController::class);
+        Route::apiResource('peminjamans', PeminjamanController::class);
+    });
 });
