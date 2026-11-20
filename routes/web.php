@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\BookController as AdminBookController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BukuController;
 use App\Http\Controllers\DashboardController;
@@ -8,9 +10,13 @@ use App\Http\Controllers\PeminjamanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
+    if (auth()->check()) {
+        return redirect()->route(
+            auth()->user()->role === 'admin' ? 'admin.dashboard' : 'dashboard'
+        );
+    }
+
+    return redirect()->route('login');
 });
 
 Route::middleware('guest')->group(function () {
@@ -33,4 +39,10 @@ Route::middleware('auth')->group(function () {
         Route::apiResource('kategoris', KategoriController::class);
         Route::apiResource('peminjamans', PeminjamanController::class);
     });
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/books', [AdminBookController::class, 'store'])->name('books.store');
+    Route::put('/books/{buku}', [AdminBookController::class, 'update'])->name('books.update');
 });

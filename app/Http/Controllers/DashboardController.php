@@ -62,6 +62,7 @@ class DashboardController extends Controller
             'tanggal_unggah' => $buku->created_at?->toDateString(),
             'stok' => (int) $buku->stok,
             'cover' => $buku->cover ?? 'from-slate-700 via-slate-900 to-black',
+            'cover_url' => $buku->cover_url,
             'inisial' => $buku->inisial ?? '',
             'is_favorit' => in_array($buku->id, $favorites, true),
         ];

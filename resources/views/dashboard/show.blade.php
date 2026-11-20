@@ -7,12 +7,16 @@
     <section class="bg-[#0d1330] px-4 py-8 md:px-12">
         <div class="mx-auto grid max-w-6xl gap-8 md:grid-cols-2">
             <div class="mx-auto w-full max-w-sm overflow-hidden rounded">
-                <div class="bg-gradient-to-br {{ $book['cover'] }} flex aspect-[3/4] items-center justify-center p-6 text-center">
-                    <div>
-                        <p class="text-5xl font-black text-white/90">{{ $book['inisial'] }}</p>
-                        <p class="mt-2 text-lg font-bold text-white/85">{{ $book['judul'] }}</p>
-                        <p class="text-sm text-white/70">{{ $book['author'] }}</p>
-                    </div>
+                <div class="relative flex aspect-[3/4] items-center justify-center bg-gradient-to-br {{ $book['cover'] }} p-6 text-center">
+                    @if ($book['cover_url'] ?? null)
+                        <img src="{{ $book['cover_url'] }}" alt="Cover {{ $book['judul'] }}" class="absolute inset-0 h-full w-full object-cover">
+                    @else
+                        <div class="relative">
+                            <p class="text-5xl font-black text-white/90">{{ $book['inisial'] }}</p>
+                            <p class="mt-2 text-lg font-bold text-white/85">{{ $book['judul'] }}</p>
+                            <p class="text-sm text-white/70">{{ $book['author'] }}</p>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="md:pt-4">

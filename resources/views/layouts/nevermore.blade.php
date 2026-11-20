@@ -47,6 +47,9 @@
             <a href="{{ route('dashboard') }}#author" class="block py-2 hover:text-indigo-300">Author</a>
             <a href="{{ route('dashboard') }}#info" class="block py-2 hover:text-indigo-300">Info</a>
             <a href="{{ route('dashboard', ['favorites' => 1]) }}" class="block py-2 hover:text-indigo-300">❤️ Favorites</a>
+            @if ((auth()->user()->role ?? 'user') === 'admin')
+                <a href="{{ route('admin.dashboard') }}" class="block py-2 text-[#8fa8ff] hover:text-white">Admin Dashboard</a>
+            @endif
         </nav>
     </header>
 
@@ -63,6 +66,9 @@
             </nav>
             <div class="border-t border-white/10 px-3 py-4 text-[11px] font-normal text-slate-300">
                 <p class="truncate">{{ auth()->user()->fullname ?? '' }}</p>
+                @if ((auth()->user()->role ?? 'user') === 'admin')
+                    <a href="{{ route('admin.dashboard') }}" class="mt-2 block rounded bg-[#2f4bd7] py-1.5 text-xs font-semibold hover:bg-[#2540bd]">Admin Dashboard</a>
+                @endif
                 <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
                     <button class="w-full rounded bg-white/10 py-1.5 text-xs font-semibold hover:bg-white/20">Logout</button>
