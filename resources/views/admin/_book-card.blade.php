@@ -42,7 +42,7 @@
 
     <button type="button"
         class="edit-book absolute right-1.5 top-1.5 rounded bg-[#2f4bd7] px-2 py-1 text-[9px] font-bold text-white shadow ring-1 ring-white/30 transition hover:bg-[#2540bd] md:text-[10px] md:opacity-0 md:group-hover:opacity-100"
-        data-book="{{ e(json_encode($editData)) }}" title="Edit {{ $buku->judul }}">
+        data-book="{{ json_encode($editData) }}" title="Edit {{ $buku->judul }}">
         Edit
     </button>
 </div>

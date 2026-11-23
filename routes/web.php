@@ -7,6 +7,7 @@ use App\Http\Controllers\BukuController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PeminjamanController;
+use App\Http\Controllers\UserLoanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/books/{id}', [DashboardController::class, 'show'])->name('books.show');
     Route::post('/books/{id}/favorite', [DashboardController::class, 'toggleFavorite'])->name('books.favorite');
+
+    Route::get('/peminjaman', [UserLoanController::class, 'index'])->name('loans.index');
+    Route::post('/books/{buku}/pinjam', [UserLoanController::class, 'store'])->name('loans.store');
+    Route::post('/peminjaman/{peminjaman}/kembalikan', [UserLoanController::class, 'returnBook'])->name('loans.return');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::prefix('api')->name('api.')->group(function () {
@@ -45,4 +51,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::post('/books', [AdminBookController::class, 'store'])->name('books.store');
     Route::put('/books/{buku}', [AdminBookController::class, 'update'])->name('books.update');
+    Route::delete('/books/{buku}', [AdminBookController::class, 'destroy'])->name('books.destroy');
 });

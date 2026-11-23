@@ -63,6 +63,21 @@ test('user bisa login dan logout', function () {
     $this->assertGuest();
 });
 
+test('user bisa login memakai nama lengkap tanpa email', function () {
+    User::factory()->create([
+        'fullname' => 'Nama Tanpa Email',
+        'email' => 'bukan-gmail@contoh.test',
+        'password' => 'password123',
+    ]);
+
+    $this->post(route('login'), [
+        'email' => 'Nama Tanpa Email',
+        'password' => 'password123',
+    ])->assertRedirect(route('dashboard'));
+
+    $this->assertAuthenticated();
+});
+
 test('dashboard menampilkan katalog dari database', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

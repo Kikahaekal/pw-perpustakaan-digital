@@ -47,6 +47,7 @@
             <a href="{{ route('dashboard') }}#author" class="block py-2 hover:text-indigo-300">Author</a>
             <a href="{{ route('dashboard') }}#info" class="block py-2 hover:text-indigo-300">Info</a>
             <a href="{{ route('dashboard', ['favorites' => 1]) }}" class="block py-2 hover:text-indigo-300">❤️ Favorites</a>
+            <a href="{{ route('loans.index') }}" class="block py-2 hover:text-indigo-300">📚 Peminjaman Saya</a>
             @if ((auth()->user()->role ?? 'user') === 'admin')
                 <a href="{{ route('admin.dashboard') }}" class="block py-2 text-[#8fa8ff] hover:text-white">Admin Dashboard</a>
             @endif
@@ -63,6 +64,7 @@
                 <a href="{{ route('dashboard') }}#author" class="block py-2.5 hover:bg-white/10">Author</a>
                 <a href="{{ route('dashboard') }}#info" class="block py-2.5 hover:bg-white/10">Info</a>
                 <a href="{{ route('dashboard', ['favorites' => 1]) }}" class="block py-2.5 hover:bg-white/10">❤️ Favorites</a>
+                <a href="{{ route('loans.index') }}" class="block py-2.5 hover:bg-white/10">📚 Peminjaman Saya</a>
             </nav>
             <div class="border-t border-white/10 px-3 py-4 text-[11px] font-normal text-slate-300">
                 <p class="truncate">{{ auth()->user()->fullname ?? '' }}</p>

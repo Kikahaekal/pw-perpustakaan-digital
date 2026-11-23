@@ -77,6 +77,31 @@ class BookController extends Controller
     }
 
     /**
+     * Hapus buku. Buku yang sudah punya riwayat peminjaman tidak boleh dihapus.
+     */
+    public function destroy(Buku $buku): RedirectResponse
+    {
+        if ($buku->peminjamans()->exists()) {
+            return redirect()
+                ->route('admin.dashboard')
+                ->with('error', 'Buku "'.$buku->judul.'" tidak dapat dihapus karena memiliki riwayat peminjaman.');
+        }
+
+        DB::transaction(function () use ($buku): void {
+            if ($buku->cover_image) {
+                Storage::disk('public')->delete($buku->cover_image);
+            }
+
+            $buku->kategoris()->detach();
+            $buku->delete();
+        });
+
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('status', 'Buku "'.$buku->judul.'" berhasil dihapus.');
+    }
+
+    /**
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */

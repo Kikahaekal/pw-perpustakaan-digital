@@ -18,11 +18,14 @@ class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $login = trim($credentials['email']);
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'fullname';
+
+        if (Auth::attempt([$field => $login, 'password' => $credentials['password']], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             $tujuan = $request->user()->role === 'admin'
@@ -33,7 +36,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'email' => 'Email/username atau password salah.',
         ])->onlyInput('email');
     }
 

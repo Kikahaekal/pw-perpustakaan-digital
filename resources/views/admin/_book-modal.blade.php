@@ -92,5 +92,15 @@
                 </div>
             </div>
         </form>
+
+        <form id="deleteBookForm" method="POST" action="#" class="mt-2 hidden"
+            data-delete-url="{{ route('admin.books.destroy', ['buku' => '__ID__']) }}"
+            onsubmit="return confirm('Hapus buku ini? Tindakan ini tidak dapat dibatalkan.')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="w-full rounded border border-red-300/50 bg-red-500/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-red-100 hover:bg-red-500/35">
+                Hapus Buku
+            </button>
+        </form>
     </div>
 </div>

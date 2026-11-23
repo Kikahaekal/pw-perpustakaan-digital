@@ -74,6 +74,8 @@
             const bookId = document.getElementById('bookFormId');
             const fileName = document.getElementById('coverFileName');
             const updateUrlTemplate = modal.dataset.updateUrl;
+            const deleteForm = document.getElementById('deleteBookForm');
+            const deleteUrlTemplate = deleteForm.dataset.deleteUrl;
 
             const fields = ['judul', 'pengarang', 'tags', 'seksi', 'penerbit', 'isbn', 'tahun_terbit', 'jumlah_halaman', 'stok', 'inisial'];
 
@@ -95,6 +97,8 @@
                     bookId.value = book.id;
                     form.action = updateUrlTemplate.replace('__ID__', book.id);
                     fields.forEach((name) => setField(name, book[name]));
+                    deleteForm.action = deleteUrlTemplate.replace('__ID__', book.id);
+                    deleteForm.classList.remove('hidden');
                     if (book.cover_image) {
                         fileName.textContent = book.cover_image.split('/').pop();
                     }
@@ -104,6 +108,8 @@
                     mode.value = 'create';
                     bookId.value = '';
                     form.action = form.dataset.createUrl;
+                    deleteForm.action = '#';
+                    deleteForm.classList.add('hidden');
                 }
 
                 modal.classList.remove('hidden');

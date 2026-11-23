@@ -62,6 +62,11 @@ test('admin melihat statistik, grafik, dan riwayat unggahan', function () {
         ->assertSee('Monthly Active Users')
         ->assertSee('Books Borrowed Monthly')
         ->assertSee('Uploads History')
+        ->assertSee('Judul Buku')
+        ->assertSee('Author / Penulis')
+        ->assertSee('Tags / Genre')
+        ->assertSee('Tanggal Upload')
+        ->assertSee('Action')
         ->assertSee('Buku Grafik Admin')
         ->assertSee('Add New Book');
 });
@@ -133,4 +138,56 @@ test('admin bisa mengubah buku dan mengunggah cover baru', function () {
 
     expect($buku->kategoris()->pluck('nama_kategori')->all())->toBe(['Fantasi']);
     expect(Kategori::query()->where('nama_kategori', 'Fantasi')->exists())->toBeTrue();
+});
+
+test('admin bisa menghapus buku beserta cover dan kategorinya', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create(['role' => 'admin']);
+    $kategori = Kategori::factory()->create();
+    $buku = Buku::factory()->create(['cover_image' => 'covers/hapus.jpg']);
+    $buku->kategoris()->attach($kategori);
+    Storage::disk('public')->put('covers/hapus.jpg', 'dummy');
+
+    $this->actingAs($admin);
+
+    $this->delete(route('admin.books.destroy', $buku))
+        ->assertRedirect(route('admin.dashboard'))
+        ->assertSessionHas('status');
+
+    $this->assertDatabaseMissing('bukus', ['id' => $buku->id]);
+    $this->assertDatabaseMissing('buku_kategoris', ['buku_id' => $buku->id]);
+    Storage::disk('public')->assertMissing('covers/hapus.jpg');
+});
+
+test('buku dengan riwayat peminjaman tidak bisa dihapus', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $buku = Buku::factory()->create();
+    Peminjaman::query()->create([
+        'user_id' => $admin->id,
+        'buku_id' => $buku->id,
+        'tanggal_pinjam' => today(),
+        'tenggat' => today()->addDays(7),
+        'status' => 'dipinjam',
+        'denda' => 0,
+    ]);
+
+    $this->actingAs($admin);
+
+    $this->delete(route('admin.books.destroy', $buku))
+        ->assertRedirect(route('admin.dashboard'))
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('bukus', ['id' => $buku->id]);
+});
+
+test('user biasa tidak bisa menghapus buku lewat route admin', function () {
+    $user = User::factory()->create(['role' => 'user']);
+    $buku = Buku::factory()->create();
+
+    $this->actingAs($user);
+
+    $this->delete(route('admin.books.destroy', $buku))->assertForbidden();
+
+    $this->assertDatabaseHas('bukus', ['id' => $buku->id]);
 });

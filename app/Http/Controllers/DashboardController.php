@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Buku;
 use App\Models\Kategori;
+use App\Models\Peminjaman;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -137,9 +138,17 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        $activeLoan = Peminjaman::query()
+            ->where('user_id', $request->user()->id)
+            ->where('buku_id', $buku->id)
+            ->where('status', 'dipinjam')
+            ->latest('tanggal_pinjam')
+            ->first();
+
         return view('dashboard.show', [
             'book' => $this->present($buku, $favorites, $authorCounts),
             'newUploads' => $this->presentMany($newUploads, $favorites, $authorCounts),
+            'activeLoan' => $activeLoan,
             'q' => '',
         ]);
     }
